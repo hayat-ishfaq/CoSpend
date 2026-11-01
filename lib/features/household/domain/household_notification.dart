@@ -12,6 +12,7 @@ class HouseholdNotification {
     this.subcategory,
     required this.payerName,
     required this.payerId,
+    this.creatorId,
     required this.createdAt,
     this.readByUserIds = const [],
   });
@@ -25,8 +26,15 @@ class HouseholdNotification {
   final String? subcategory;
   final String payerName;
   final String payerId;
+  final String? creatorId;
   final DateTime createdAt;
   final List<String> readByUserIds;
+
+  /// Returns true if this notification was initiated by [userId].
+  bool isCreatedBy(String userId) {
+    if (userId.isEmpty) return false;
+    return payerId == userId || (creatorId != null && creatorId == userId);
+  }
 
   factory HouseholdNotification.fromMap(String id, Map<String, dynamic> map) {
     DateTime parsedDate = DateTime.now();
@@ -47,6 +55,7 @@ class HouseholdNotification {
       subcategory: map['subcategory'] as String?,
       payerName: map['payerName'] as String? ?? 'Flatmate',
       payerId: map['payerId'] as String? ?? '',
+      creatorId: map['creatorId'] as String? ?? map['createdByUserId'] as String?,
       createdAt: parsedDate,
       readByUserIds: (map['readByUserIds'] as List<dynamic>?)
               ?.map((id) => id.toString())
@@ -65,6 +74,7 @@ class HouseholdNotification {
       'subcategory': subcategory,
       'payerName': payerName,
       'payerId': payerId,
+      'creatorId': creatorId,
       'createdAt': Timestamp.fromDate(createdAt),
       'readByUserIds': readByUserIds,
     };

@@ -7,6 +7,8 @@ import '../../../../core/theme/design_system.dart';
 import '../../../../core/utils/money.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/household_notification.dart';
 import '../providers/notification_providers.dart';
 
@@ -200,15 +202,67 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
                   );
                 }
 
-                final currentUserId = ref.watch(sessionProvider).value?.user?.id ?? '';
+                final currentUserId = FirebaseAuth.instance.currentUser?.uid ??
+                    ref.watch(currentUserProvider).value?.id ??
+                    ref.watch(sessionProvider).value?.user?.id ?? '';
                 final locallyRead = ref.watch(locallyReadNotificationIdsProvider);
+
+                final displayItems = items
+                    .where((n) => !n.isCreatedBy(currentUserId))
+                    .toList();
+
+                if (displayItems.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: CoSpendColors.prussianBlue.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.notifications_none_rounded,
+                              size: 32,
+                              color: CoSpendColors.prussianBlue,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'All caught up!',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: isDark ? Colors.white : CoSpendColors.prussianBlue,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'When roommates log expenses or budget alerts trigger, you\'ll see them right here.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isDark ? CoSpendColors.darkTextMuted : CoSpendColors.textMuted,
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
                 return ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  itemCount: items.length,
+                  itemCount: displayItems.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final item = items[index];
+                    final item = displayItems[index];
                     final isUnread = !item.readByUserIds.contains(currentUserId) &&
                         !locallyRead.contains(item.id);
 

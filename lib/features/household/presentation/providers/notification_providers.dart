@@ -1,9 +1,11 @@
-import '../../../../core/services/notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/services/notification_service.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../domain/household_notification.dart';
 import 'household_providers.dart';
@@ -31,11 +33,12 @@ final householdNotificationsProvider =
 
 class LocallyReadNotificationsController extends Notifier<Set<String>> {
   static const String _prefKey = 'cospend_locally_read_notification_ids';
+  static final Set<String> _cachedIds = <String>{};
 
   @override
   Set<String> build() {
     _loadFromPrefs();
-    return <String>{};
+    return Set<String>.from(_cachedIds);
   }
 
   Future<void> _loadFromPrefs() async {
@@ -43,17 +46,20 @@ class LocallyReadNotificationsController extends Notifier<Set<String>> {
       final prefs = await SharedPreferences.getInstance();
       final stored = prefs.getStringList(_prefKey) ?? [];
       if (stored.isNotEmpty) {
-        state = {...state, ...stored};
+        _cachedIds.addAll(stored);
+        state = {...state, ..._cachedIds};
       }
     } catch (_) {}
   }
 
   void markIds(Iterable<String> ids) {
+    _cachedIds.addAll(ids);
     state = {...state, ...ids};
     _saveToPrefs();
   }
 
   void markOne(String id) {
+    _cachedIds.add(id);
     state = {...state, id};
     _saveToPrefs();
   }
@@ -61,7 +67,7 @@ class LocallyReadNotificationsController extends Notifier<Set<String>> {
   Future<void> _saveToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_prefKey, state.toList());
+      await prefs.setStringList(_prefKey, _cachedIds.toList());
     } catch (_) {}
   }
 }
@@ -80,8 +86,13 @@ class NotificationActions extends AsyncNotifier<void> {
   /// Mark all notifications as read both locally (instant badge disappearance)
   /// and remotely in Firestore.
   Future<void> markAllAsRead() async {
-    final householdId = ref.read(sessionProvider).value?.householdId;
-    final uid = ref.read(sessionProvider).value?.user?.id;
+    final householdId = ref.read(currentHouseholdProvider).value?.id ??
+        ref.read(sessionProvider).value?.householdId;
+    final authUid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = (authUid != null && authUid.isNotEmpty)
+        ? authUid
+        : (ref.read(sessionProvider).value?.user?.id ??
+            ref.read(currentUserProvider).value?.id);
     if (householdId == null || uid == null) return;
 
     final firestore = FirebaseFirestore.instance;
@@ -148,8 +159,13 @@ class NotificationActions extends AsyncNotifier<void> {
 
   /// Mark an individual notification as read.
   Future<void> markAsRead(String notificationId) async {
-    final householdId = ref.read(sessionProvider).value?.householdId;
-    final uid = ref.read(sessionProvider).value?.user?.id;
+    final householdId = ref.read(currentHouseholdProvider).value?.id ??
+        ref.read(sessionProvider).value?.householdId;
+    final authUid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = (authUid != null && authUid.isNotEmpty)
+        ? authUid
+        : (ref.read(sessionProvider).value?.user?.id ??
+            ref.read(currentUserProvider).value?.id);
     if (householdId == null || uid == null) return;
 
     // Immediate local clearance
@@ -175,13 +191,22 @@ final notificationActionsProvider =
 /// Count of notifications the current user has not marked read.
 /// Evaluates both Firestore status and instant local views.
 final unreadNotificationCountProvider = Provider<int>((ref) {
-  final uid = ref.watch(sessionProvider).value?.user?.id;
-  if (uid == null) return 0;
+  final authUid = FirebaseAuth.instance.currentUser?.uid;
+  final sessionUid = ref.watch(sessionProvider).value?.user?.id;
+  final currentUid = ref.watch(currentUserProvider).value?.id;
+  final uid = (authUid != null && authUid.isNotEmpty)
+      ? authUid
+      : (sessionUid != null && sessionUid.isNotEmpty)
+          ? sessionUid
+          : currentUid;
+  if (uid == null || uid.isEmpty) return 0;
+
   final notifications =
       ref.watch(householdNotificationsProvider).value ?? const [];
   final locallyRead = ref.watch(locallyReadNotificationIdsProvider);
 
   return notifications.where((notification) {
+    if (notification.isCreatedBy(uid)) return false;
     if (locallyRead.contains(notification.id)) return false;
     return !notification.readByUserIds.contains(uid);
   }).length;

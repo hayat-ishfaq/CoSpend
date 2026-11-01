@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
@@ -9,10 +10,16 @@ import 'notification_service.dart';
 /// Must be a top-level function (not a class method) as required by FCM.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase.initializeApp() is NOT needed here because firebase_messaging
-  // ensures the native SDK is initialized before invoking this handler.
   final notification = message.notification;
   if (notification == null) return;
+
+  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  final payerId = message.data['payerId'] as String?;
+  final creatorId = message.data['creatorId'] as String?;
+  if (currentUserId != null && currentUserId.isNotEmpty) {
+    if (payerId != null && payerId == currentUserId) return;
+    if (creatorId != null && creatorId == currentUserId) return;
+  }
 
   await NotificationService.instance.showNotification(
     notificationId: (message.data['notificationId'] as String?) ?? message.messageId ?? message.sentTime.toString(),
@@ -77,6 +84,15 @@ class FcmService {
     FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
       if (notification == null) return;
+
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      final payerId = message.data['payerId'] as String?;
+      final creatorId = message.data['creatorId'] as String?;
+      if (currentUserId != null && currentUserId.isNotEmpty) {
+        if (payerId != null && payerId == currentUserId) return;
+        if (creatorId != null && creatorId == currentUserId) return;
+      }
+
       NotificationService.instance.showNotification(
         notificationId: (message.data['notificationId'] as String?) ?? message.messageId ?? message.sentTime?.toString() ?? 'fcm_msg',
         title: notification.title ?? 'CoSpend',

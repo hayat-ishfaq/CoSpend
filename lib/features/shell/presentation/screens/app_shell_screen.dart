@@ -7,6 +7,8 @@ import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/design_system.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../household/presentation/providers/notification_providers.dart';
 import '../../../household/presentation/widgets/notifications_sheet.dart';
 
@@ -28,7 +30,9 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentUserId = ref.watch(sessionProvider).value?.user?.id ?? '';
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ??
+        ref.watch(currentUserProvider).value?.id ??
+        ref.watch(sessionProvider).value?.user?.id ?? '';
 
     // Global listener for new flatmate activity notifications (inside & outside the app)
     ref.listen(householdNotificationsProvider, (previous, next) {
@@ -54,7 +58,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
       for (final item in list) {
         final isNew = !previousIds.contains(item.id);
         final wasSuppressed = _suppressedNotificationIds.contains(item.id);
-        final isNotMine = item.payerId != currentUserId;
+        final isNotMine = !item.isCreatedBy(currentUserId);
         final isAlreadyReadInCloud = item.readByUserIds.contains(currentUserId);
         final isLocallyRead = locallyRead.contains(item.id);
         final notPresentedYet =

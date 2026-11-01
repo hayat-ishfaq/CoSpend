@@ -9,6 +9,7 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/errors/firebase_error_mapper.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../shared/models/household.dart';
 import '../../../shared/models/household_member.dart';
 import '../../expenses/domain/custom_category.dart';
@@ -260,6 +261,7 @@ class FirebaseHouseholdRepository implements HouseholdRepository {
         });
 
         final notifRef = householdRef.collection('notifications').doc();
+        NotificationService.instance.markPresented(notifRef.id);
         notifRef.set({
           'householdId': householdId,
           'title': 'New roommate joined! 🎉',
@@ -269,8 +271,9 @@ class FirebaseHouseholdRepository implements HouseholdRepository {
           'subcategory': null,
           'payerName': member.name,
           'payerId': uid,
+          'creatorId': uid,
           'createdAt': FieldValue.serverTimestamp(),
-          'readByUserIds': <String>[],
+          'readByUserIds': <String>[uid],
         }).catchError((e) {
           debugPrint('Non-fatal notification write error: $e');
         });

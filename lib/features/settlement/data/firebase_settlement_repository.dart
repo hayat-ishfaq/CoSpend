@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/errors/firebase_error_mapper.dart';
+import '../../../core/services/notification_service.dart';
 import '../domain/settlement.dart';
 import '../domain/settlement_repository.dart';
 
@@ -82,6 +83,9 @@ class FirebaseSettlementRepository implements SettlementRepository {
           .collection('notifications')
           .doc();
 
+      // Ensure the recorder does not trigger self-notification or unread counter locally
+      NotificationService.instance.markPresented(notifRef.id);
+
       batch.set(notifRef, {
         'householdId': householdId,
         'title': 'Payment settled: Rs. $amountRupees',
@@ -91,8 +95,12 @@ class FirebaseSettlementRepository implements SettlementRepository {
         'subcategory': null,
         'payerName': fromName,
         'payerId': recordedByUserId,
+        'creatorId': recordedByUserId,
         'createdAt': FieldValue.serverTimestamp(),
-        'readByUserIds': <String>[],
+        'readByUserIds': <String>{
+          if (recordedByUserId.isNotEmpty) recordedByUserId,
+          if (transfer.fromMemberId.isNotEmpty) transfer.fromMemberId,
+        }.toList(),
       });
 
       await batch.commit();

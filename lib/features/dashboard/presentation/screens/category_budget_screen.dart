@@ -555,6 +555,40 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
           ),
         ),
         actions: [
+          if (isOwner)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+              child: FilledButton.icon(
+                onPressed: isSaving ? null : _saveBudgets,
+                icon: isSaving
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check_rounded, size: 16),
+                label: Text(
+                  isSaving ? 'Saving...' : 'Save',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: CoSpendColors.jadeGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
           const NotificationBellButton(),
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -811,25 +845,77 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: CoSpendShadows.floating,
-        ),
-        child: FloatingActionButton(
-          onPressed: () async {
-            final created = await CreateCategorySheet.show(context);
-            if (created != null && mounted) {
-              setState(() => _initialized = false);
-            }
-          },
-          backgroundColor: CoSpendColors.jadeGreen,
-          elevation: 0,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
-        ),
-      ),
+      bottomNavigationBar: isOwner
+          ? SafeArea(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                decoration: BoxDecoration(
+                  color: isDark ? CoSpendColors.darkCard : CoSpendColors.white,
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark ? CoSpendColors.darkBorder : CoSpendColors.borderLight,
+                      width: 0.8,
+                    ),
+                  ),
+                  boxShadow: isDark ? null : CoSpendShadows.navBar,
+                ),
+                child: Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final created = await CreateCategorySheet.show(context);
+                        if (created != null && mounted) {
+                          setState(() => _initialized = false);
+                        }
+                      },
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Add Category'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: CoSpendColors.jadeGreen,
+                        side: const BorderSide(color: CoSpendColors.jadeGreen),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: isSaving ? null : _saveBudgets,
+                        icon: isSaving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check_circle_outline_rounded, size: 18),
+                        label: Text(
+                          isSaving ? 'Saving Budgets...' : 'Save Category Budgets',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: CoSpendColors.jadeGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

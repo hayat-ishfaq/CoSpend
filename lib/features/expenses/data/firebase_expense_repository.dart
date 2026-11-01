@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/errors/firebase_error_mapper.dart';
+import '../../../core/services/notification_service.dart';
 import '../domain/expense.dart';
 import '../domain/expense_repository.dart';
 
@@ -46,6 +47,9 @@ class FirebaseExpenseRepository implements ExpenseRepository {
           .collection('notifications')
           .doc();
 
+      // Ensure the creator does not trigger a self-notification or unread counter locally
+      NotificationService.instance.markPresented(notifRef.id);
+
       final userDoc = await _firestore
           .collection(FirestoreCollections.users)
           .doc(expense.paidById)
@@ -70,8 +74,12 @@ class FirebaseExpenseRepository implements ExpenseRepository {
         'subcategory': expense.subcategory,
         'payerName': payerName,
         'payerId': expense.paidById,
+        'creatorId': expense.createdByUserId,
         'createdAt': FieldValue.serverTimestamp(),
-        'readByUserIds': <String>[],
+        'readByUserIds': <String>{
+          if (expense.paidById.isNotEmpty) expense.paidById,
+          if (expense.createdByUserId.isNotEmpty) expense.createdByUserId,
+        }.toList(),
       });
 
       await batch.commit();
