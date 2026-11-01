@@ -23,4 +23,10 @@ abstract final class AppConstants {
   static const String supportEmail = 'support@cospend.app';
   static const String supportGithubUrl =
       'https://github.com/hayat-ishfaq/expensetrack/issues';
+
+  /// Legal links — displayed in Help & Support and on the signup screen.
+  static const String privacyPolicyUrl =
+      'https://cospend.app/privacy';
+  static const String termsOfServiceUrl =
+      'https://cospend.app/terms';
 }

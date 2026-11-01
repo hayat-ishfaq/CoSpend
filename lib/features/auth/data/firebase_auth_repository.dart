@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/firestore_constants.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../core/errors/firebase_error_mapper.dart';
 import '../../../shared/models/app_user.dart';
 import '../domain/auth_repository.dart';
@@ -192,6 +193,53 @@ class FirebaseAuthRepository implements AuthRepository {
           // Member document update failure is non-fatal if user left or doc doesn't exist
         }
       }
+    } catch (error) {
+      throw toAppException(error);
+    }
+  }
+
+  @override
+  Future<void> deleteAccount({
+    required String uid,
+    required String email,
+    required String password,
+    String? householdId,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw const AuthException('No authenticated user found.');
+
+      // Re-authenticate to satisfy Firebase recent-login requirement.
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+
+      // Remove household membership if the user belongs to one.
+      if (householdId != null && householdId.isNotEmpty) {
+        try {
+          await _firestore
+              .collection(FirestoreCollections.households)
+              .doc(householdId)
+              .collection(FirestoreCollections.members)
+              .doc(uid)
+              .delete();
+        } catch (_) {
+          // Non-fatal: proceed even if membership removal fails.
+        }
+      }
+
+      // Delete the Firestore profile document.
+      try {
+        await _firestore
+            .collection(FirestoreCollections.users)
+            .doc(uid)
+            .delete();
+      } catch (_) {}
+
+      // Delete the Firebase Auth account (point of no return).
+      await user.delete();
     } catch (error) {
       throw toAppException(error);
     }

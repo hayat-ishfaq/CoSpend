@@ -52,7 +52,7 @@ service cloud.firestore {
       allow get: if isUser(userId) || sharesHouseholdWith(userId);
       allow list: if false;
       allow create, update: if isUser(userId);
-      allow delete: if false;
+      allow delete: if isUser(userId);
     }
 
     match /inviteCodes/{code} {

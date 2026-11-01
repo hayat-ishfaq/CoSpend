@@ -108,6 +108,23 @@ class AuthActions extends AsyncNotifier<void> {
   }) {
     return _repository.uploadAvatar(uid: uid, bytes: bytes);
   }
+
+  Future<void> deleteAccount({
+    required String uid,
+    required String email,
+    required String password,
+    String? householdId,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await _repository.deleteAccount(
+        uid: uid,
+        email: email,
+        password: password,
+        householdId: householdId,
+      );
+    });
+  }
 }
 
 final authActionsProvider =

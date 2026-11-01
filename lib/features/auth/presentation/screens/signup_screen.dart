@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -195,6 +196,62 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               onAction: bannerAction,
               onDismiss: () => setState(() => _formError = null),
             ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                children: [
+                  const TextSpan(text: 'By creating an account you agree to our '),
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final uri = Uri.parse(AppConstants.termsOfServiceUrl);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: const Text(
+                        'Terms',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF1E3A5F),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const TextSpan(text: ' and '),
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final uri = Uri.parse(AppConstants.privacyPolicyUrl);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: const Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF1E3A5F),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           LoadingButton(
             label: 'Create account',
             isLoading: submitting,

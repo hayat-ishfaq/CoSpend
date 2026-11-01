@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Expensetrack</string>
+		<string>CoSpend</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>expensetrack</string>
+		<string>CoSpend</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -24,6 +24,19 @@
 		<string>????</string>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<!-- Permission usage descriptions — required by App Store Connect (ITMS-90683) -->
+		<key>NSCameraUsageDescription</key>
+		<string>CoSpend needs camera access to let you take a profile photo.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>CoSpend needs photo library access to let you choose a profile picture.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>CoSpend needs permission to save images to your photo library.</string>
+		<!-- FCM / Push Notifications -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
 			<string>mailto</string>

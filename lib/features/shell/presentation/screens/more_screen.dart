@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -113,6 +114,89 @@ class MoreScreen extends ConsumerWidget {
     }
   }
 
+
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final session = ref.read(sessionProvider).value;
+    final user = session?.user;
+    if (user == null) return;
+    final household = ref.read(currentHouseholdProvider).value;
+
+    // Step 1: warn the user
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Delete account permanently?',
+      message:
+          'This will remove your profile, data, and access to CoSpend. This action cannot be undone.',
+      confirmLabel: 'Continue',
+      destructive: true,
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    // Step 2: ask for password to re-authenticate
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final passwordConfirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm your password'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: passwordController,
+            obscureText: true,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Password',
+              border: OutlineInputBorder(),
+            ),
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Please enter your password.' : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: CoSpendColors.alertRed,
+            ),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(ctx).pop(true);
+              }
+            },
+            child: const Text('Delete account'),
+          ),
+        ],
+      ),
+    );
+    if (passwordConfirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(authActionsProvider.notifier).deleteAccount(
+            uid: user.id,
+            email: user.email,
+            password: passwordController.text,
+            householdId: household?.id,
+          );
+    } catch (e) {
+      if (context.mounted) {
+        showAppSnack(context, e.toString(), error: true);
+      }
+    }
+  }
+
+  Future<void> _launchUrl(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (context.mounted) {
+      showAppSnack(context, 'Could not open link.', error: true);
+    }
+  }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider).value;

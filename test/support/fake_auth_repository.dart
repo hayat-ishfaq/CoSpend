@@ -84,4 +84,16 @@ class FakeAuthRepository implements AuthRepository {
       );
     }
   }
+
+  @override
+  Future<void> deleteAccount({
+    required String uid,
+    required String email,
+    required String password,
+    String? householdId,
+  }) async {
+    currentUser = null;
+    appUser = null;
+    _authChanges.add(null);
+  }
 }

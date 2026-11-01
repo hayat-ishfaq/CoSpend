@@ -44,4 +44,14 @@ abstract interface class AuthRepository {
     String? bio,
     String? householdId,
   });
+
+  /// Permanently deletes the authenticated user's account and all associated
+  /// data (users/{uid} document, household membership). Re-authentication with
+  /// [password] is performed first to satisfy Firebase's recent-login requirement.
+  Future<void> deleteAccount({
+    required String uid,
+    required String email,
+    required String password,
+    String? householdId,
+  });
 }
