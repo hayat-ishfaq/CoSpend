@@ -1,4 +1,3 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,20 +18,10 @@ void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('CoSpend Flutter Framework Error: ${details.exceptionAsString()}');
-    if (!kDebugMode) {
-      try {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-      } catch (_) {}
-    }
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('CoSpend Unhandled Async Error: $error\n$stack');
-    if (!kDebugMode) {
-      try {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      } catch (_) {}
-    }
     return true;
   };
 

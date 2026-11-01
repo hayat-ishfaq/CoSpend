@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,14 +22,6 @@ final firebaseInitProvider = FutureProvider<void>((ref) async {
     );
   } catch (e) {
     debugPrint('Firebase.initializeApp warning: $e');
-  }
-
-  // Enable Crashlytics in release mode only.
-  if (!kDebugMode) {
-    await FirebaseCrashlytics.instance
-        .setCrashlyticsCollectionEnabled(true);
-    FlutterError.onError =
-        FirebaseCrashlytics.instance.recordFlutterFatalError;
   }
 
   // Initialize local notification tray (foreground alerts via Firestore).

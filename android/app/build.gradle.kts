@@ -6,7 +6,6 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
 }
 
 // Load signing credentials from key.properties (never committed to source control)
@@ -17,7 +16,7 @@ if (keyPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.cospend.app"
+    namespace = "com.example.expensetrack"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.cospend.app"
+        applicationId = "com.example.expensetrack"
         minSdk = flutter.minSdkVersion
         targetSdk = 34
         versionCode = flutter.versionCode
