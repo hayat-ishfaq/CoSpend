@@ -57,9 +57,8 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
         final isNotMine = item.payerId != currentUserId;
         final isAlreadyReadInCloud = item.readByUserIds.contains(currentUserId);
         final isLocallyRead = locallyRead.contains(item.id);
-        final notPresentedYet = !NotificationService.instance.isPresented(
-          item.id,
-        );
+        final notPresentedYet =
+            !NotificationService.instance.isPresented(item.id);
 
         // Only trigger alerts for genuinely NEW events occurring while actively using the app,
         // and only if the user hasn't already seen or read them.
@@ -87,9 +86,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               body: item.body,
               onTap: () {
                 // When tapped, mark as read immediately so it never notifies again
-                ref
-                    .read(notificationActionsProvider.notifier)
-                    .markAsRead(item.id);
+                ref.read(notificationActionsProvider.notifier).markAsRead(item.id);
                 NotificationsSheet.show(context);
               },
             );
@@ -105,9 +102,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           color: isDark ? const Color(0xFF071A2E) : CoSpendColors.white,
           border: Border(
             top: BorderSide(
-              color: isDark
-                  ? CoSpendColors.darkBorder
-                  : CoSpendColors.borderLight,
+              color: isDark ? CoSpendColors.darkBorder : CoSpendColors.borderLight,
               width: 0.8,
             ),
           ),
