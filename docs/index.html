@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoSpend — Smart Household Expenses & Roommate Budgets</title>
+  
+  <!-- OpenGraph / Social Previews (Optimized for LinkedIn & Twitter) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CoSpend — Smart Shared Expenses & Roommate Budgets">
+  <meta property="og:description" content="Never argue about rent, groceries, or utilities again. Track shared household expenses, set category budgets, and settle up easily.">
+  <meta property="og:image" content="https://hayat-ishfaq.github.io/expensetrack/app_logo.png">
+  <meta name="theme-color" content="#00B074">
+  <link rel="icon" type="image/png" href="app_logo.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #00B074;
+      --primary-hover: #009361;
+      --primary-soft: rgba(0, 176, 116, 0.12);
+      --navy: #0A192F;
+      --navy-light: #122644;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --bg-canvas: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-md: 0 10px 25px -5px rgba(0, 176, 116, 0.15), 0 8px 10px -6px rgba(0,0,0,0.05);
+      --shadow-lg: 0 20px 35px -10px rgba(10, 25, 47, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Header & Nav ─── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.5px;
+    }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 176, 116, 0.25);
+    }
+
+    .nav-cta {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.6rem 1.25rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 176, 116, 0.3);
+    }
+
+    .nav-cta:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* ─── Hero Section ─── */
+    .hero {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 4.5rem 1.5rem 3rem;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: center;
+      gap: 3.5rem;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary-soft);
+      color: var(--primary);
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .hero h1 {
+      font-size: 3.25rem;
+      line-height: 1.15;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -1.2px;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 span {
+      color: var(--primary);
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      max-width: 540px;
+    }
+
+    .download-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      align-items: flex-start;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.85rem;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 1rem 2rem;
+      border-radius: 16px;
+      text-decoration: none;
+      box-shadow: 0 10px 25px rgba(0, 176, 116, 0.35);
+      transition: all 0.25s ease;
+    }
+
+    .btn-download:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(0, 176, 116, 0.45);
+    }
+
+    .btn-download svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    .version-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .version-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    /* ─── Mockup Phone Card ─── */
+    .mockup-container {
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .phone-mockup {
+      width: 320px;
+      background: #FFFFFF;
+      border: 8px solid #0F172A;
+      border-radius: 44px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.05);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 18px;
+      background: #0F172A;
+      margin: 0 auto;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    .phone-screen {
+      padding: 1.25rem;
+      background: #F8FAFC;
+    }
+
+    .ui-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .ui-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--navy);
+    }
+
+    .ui-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 1rem;
+      margin-bottom: 0.85rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+    }
+
+    .circle-stat {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 8px solid var(--primary);
+      margin: 0 auto 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: var(--navy);
+      font-size: 1.15rem;
+    }
+
+    .circle-stat span {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 0.6rem;
+      margin-top: 0.6rem;
+    }
+
+    .stat-val {
+      font-weight: 800;
+      color: var(--navy);
+      font-size: 0.85rem;
+    }
+
+    .category-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .category-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .icon-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--primary-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 0.85rem;
+    }
+
+    /* ─── Features Grid ─── */
+    .features {
+      max-width: 1140px;
+      margin: 4rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 3rem;
+    }
+
+    .section-header h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.8px;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(0, 176, 116, 0.4);
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ─── How to Install ─── */
+    .install-section {
+      background: #FFFFFF;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 4.5rem 1.5rem;
+    }
+
+    .install-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .steps-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .step-box {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+
+    .step-box h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.4rem;
+    }
+
+    .step-box p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── Feedback & CTA Banner ─── */
+    .feedback-banner {
+      max-width: 900px;
+      margin: 4.5rem auto;
+      background: linear-gradient(135deg, #0A192F 0%, #17325B 100%);
+      color: #fff;
+      border-radius: 28px;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .feedback-banner h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      margin-bottom: 0.75rem;
+    }
+
+    .feedback-banner p {
+      color: #94A3B8;
+      max-width: 580px;
+      margin: 0 auto 2rem;
+      font-size: 1.05rem;
+    }
+
+    .banner-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.9rem 1.6rem;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 868px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding-top: 2.5rem;
+      }
+      .hero p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .download-group {
+        align-items: center;
+      }
+      .steps-list {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <img src="app_logo.png" alt="CoSpend Logo">
+        <span>CoSpend</span>
+      </a>
+      <a href="#download" class="nav-cta">Download App</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="download">
+    <div class="hero-content">
+      <div class="badge-pill">
+        <div class="badge-dot"></div>
+        <span>v1.5.10 Beta Available for Android</span>
+      </div>
+      <h1>Split bills fairly.<br>Manage budgets <span>together</span>.</h1>
+      <p>
+        No more awkward conversations or messy spreadsheets. Track shared groceries, rent, and utility bills with roommates, set monthly limits, and settle up in one click.
+      </p>
+
+      <div class="download-group">
+        <!-- Direct Download Link configured for GitHub Releases -->
+        <a href="https://github.com/hayat-ishfaq/expensetrack/releases/download/v1.5.10/app-release.apk" id="apkDownloadBtn" class="btn-download">
+          <svg viewBox="0 0 24 24">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+          </svg>
+          <span>Download Android APK</span>
+        </a>
+        
+        <div class="version-meta">
+          <span>📦 Version 1.5.10</span>
+          <span>•</span>
+          <span>⚡ 61.9 MB</span>
+          <span>•</span>
+          <span>🛡️ Verified & Ad-Free</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Mockup Card -->
+    <div class="mockup-container">
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="ui-header">
+            <div class="ui-title">BUDGETS HUB</div>
+            <div style="font-size: 0.9rem;">🔔</div>
+          </div>
+          <div class="ui-card">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748B;">Household Cycle</div>
+            <div class="circle-stat">
+              25%
+              <span>SPENT</span>
+            </div>
+            <div class="stat-row">
+              <div>Spent: <div class="stat-val">Rs. 750</div></div>
+              <div style="text-align: right;">Left: <div class="stat-val" style="color: #00B074;">Rs. 2,250</div></div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.75rem; font-weight: 800; color: #0A192F; margin: 0.8rem 0 0.4rem;">CATEGORIES</div>
+          <div class="category-row">
+            <div class="category-badge">
+              <div class="icon-box">🏠</div>
+              <div>Rent</div>
+            </div>
+            <div style="font-weight: 800; color: #0A192F;">Rs. 3,000</div>
+          </div>
+          <div class="category-row">
+            <div class="category-badge">
+              <div class="icon-box">🛒</div>
+              <div>Groceries</div>
+            </div>
+            <div style="font-weight: 800; color: #0A192F;">Rs. 1,500</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="section-header">
+      <h2>Built for Roommates & Flatmates</h2>
+      <p>Everything you need to keep household finances transparent, organized, and stress-free.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Category Budgets</h3>
+        <p>Set custom monthly spending caps for Groceries, Rent, Utilities, and Dining. Know exactly when your household approaches budget limits.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🤝</div>
+        <h3>Fair & Flexible Splits</h3>
+        <p>Split bills equally or assign custom amounts. Every roommate sees their share clearly with integer precision and real-time updates.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Smart Debt Simplification</h3>
+        <p>Stop sending multiple small payments. CoSpend calculates the minimum transfers needed to clear all roommate debts instantly.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Instant Flatmate Alerts</h3>
+        <p>Receive real-time push alerts when roommates log expenses or settle up. Zero duplicate notifications and complete audit transparency.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How to Install Walkthrough -->
+  <section class="install-section">
+    <div class="install-container">
+      <div class="section-header" style="margin-bottom: 1.5rem;">
+        <h2>How to Install on Android</h2>
+        <p>Since CoSpend is currently in beta testing, follow these 3 quick steps to install the APK:</p>
+      </div>
+
+      <div class="steps-list">
+        <div class="step-box">
+          <div class="step-num">1</div>
+          <h4>Download the APK</h4>
+          <p>Tap the green "Download Android APK" button above to start the direct download.</p>
+        </div>
+        <div class="step-box">
+          <div class="step-num">2</div>
+          <h4>Allow Installation</h4>
+          <p>If prompted by Chrome or your browser, select <em>"Download anyway"</em> and <em>"Allow from this source"</em>.</p>
+        </div>
+        <div class="step-box">
+          <div class="step-num">3</div>
+          <h4>Open & Install</h4>
+          <p>Tap the notification once downloaded, click <strong>Install</strong>, and create your flat account in 30 seconds!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feedback Banner -->
+  <section class="feedback-banner">
+    <h2>Help Us Make CoSpend Better!</h2>
+    <p>We're actively improving the app. Tried it out? Have ideas or ran into a bug? Your feedback directly shapes our upcoming releases.</p>
+    <div class="banner-actions">
+      <a href="https://github.com/hayat-ishfaq/expensetrack/issues" target="_blank" class="btn-secondary">Submit Feedback</a>
+      <a href="https://github.com/hayat-ishfaq/expensetrack" target="_blank" class="btn-secondary">View on GitHub</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 CoSpend. Crafted with Flutter & Firebase. Open Beta.</p>
+  </footer>
+
+</body>
+</html>
+
