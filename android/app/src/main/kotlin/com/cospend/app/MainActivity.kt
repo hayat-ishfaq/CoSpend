@@ -1,4 +1,4 @@
-package com.example.expensetrack
+package com.cospend.app
 
 import android.content.Intent
 import android.os.Bundle
@@ -17,3 +17,4 @@ class MainActivity : FlutterActivity() {
         }
     }
 }
+

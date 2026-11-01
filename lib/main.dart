@@ -19,16 +19,19 @@ void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('CoSpend Flutter Framework Error: ${details.exceptionAsString()}');
-    // Forward to Crashlytics after Firebase is initialized.
     if (!kDebugMode) {
-      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      try {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      } catch (_) {}
     }
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('CoSpend Unhandled Async Error: $error\n$stack');
     if (!kDebugMode) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      try {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      } catch (_) {}
     }
     return true;
   };
