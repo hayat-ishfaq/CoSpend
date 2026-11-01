@@ -41,8 +41,32 @@ class CategoryBudgetScreen extends ConsumerStatefulWidget {
 class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, Map<String, TextEditingController>> _memberControllers = {};
+  final Map<String, int> _initialCategoryBudgets = {};
+  final Map<String, Map<String, int>> _initialMemberCategoryBudgets = {};
   final Set<String> _expandedCategories = {};
   bool _initialized = false;
+
+  bool _hasChanges() {
+    if (!_initialized) return false;
+    for (final entry in _controllers.entries) {
+      final currentRupees = int.tryParse(entry.value.text.trim()) ?? 0;
+      final currentPaisa = currentRupees * 100;
+      final initialPaisa = _initialCategoryBudgets[entry.key] ?? 0;
+      if (currentPaisa != initialPaisa) return true;
+
+      final memberMap = _memberControllers[entry.key];
+      if (memberMap != null) {
+        final initialMemberMap = _initialMemberCategoryBudgets[entry.key] ?? {};
+        for (final mEntry in memberMap.entries) {
+          final mRupees = int.tryParse(mEntry.value.text.trim()) ?? 0;
+          final mPaisa = mRupees * 100;
+          final initialMPaisa = initialMemberMap[mEntry.key] ?? 0;
+          if (mPaisa != initialMPaisa) return true;
+        }
+      }
+    }
+    return false;
+  }
 
   List<_BudgetCategoryItem> _getCategoryItems(Household? household) {
     final list = <_BudgetCategoryItem>[];
@@ -100,6 +124,7 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
     final items = _getCategoryItems(household);
     for (final item in items) {
       final paisa = household.categoryBudgetsPaisa[item.id] ?? 0;
+      _initialCategoryBudgets[item.id] = paisa;
       _controllers[item.id] ??= TextEditingController();
       if (paisa > 0) {
         final rupees = (paisa / 100).round();
@@ -107,9 +132,11 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
       }
 
       _memberControllers[item.id] ??= {};
+      _initialMemberCategoryBudgets[item.id] ??= {};
       for (final member in members) {
         final memberPaisa =
             household.getMemberCategoryBudget(item.id, member.id);
+        _initialMemberCategoryBudgets[item.id]![member.id] = memberPaisa;
         var ctrl = _memberControllers[item.id]?[member.id];
         if (ctrl == null) {
           ctrl = TextEditingController(
@@ -199,7 +226,23 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
             memberCategoryBudgetsPaisa: memberCategoryBudgetsPaisa,
           );
 
+      // Refresh initial state so _hasChanges() resets to false
+      for (final entry in _controllers.entries) {
+        final rupees = int.tryParse(entry.value.text.trim()) ?? 0;
+        _initialCategoryBudgets[entry.key] = rupees * 100;
+
+        final memberMap = _memberControllers[entry.key];
+        if (memberMap != null) {
+          _initialMemberCategoryBudgets[entry.key] ??= {};
+          for (final mEntry in memberMap.entries) {
+            final mRupees = int.tryParse(mEntry.value.text.trim()) ?? 0;
+            _initialMemberCategoryBudgets[entry.key]![mEntry.key] = mRupees * 100;
+          }
+        }
+      }
+
       if (!mounted) return;
+      setState(() {});
       showAppSnack(context, 'Budgets updated successfully');
     } catch (e) {
       if (!mounted) return;
@@ -555,40 +598,6 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
           ),
         ),
         actions: [
-          if (isOwner)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-              child: FilledButton.icon(
-                onPressed: isSaving ? null : _saveBudgets,
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.check_rounded, size: 16),
-                label: Text(
-                  isSaving ? 'Saving...' : 'Save',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: CoSpendColors.jadeGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
           const NotificationBellButton(),
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -613,12 +622,11 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-              children: [
+          ListView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+            children: [
                 // ── Summary Card ───────────────────────────────────────────
                 _SummaryCard(
                   totalBudgetPaisa: totalBudgetPaisa,
@@ -842,80 +850,79 @@ class _CategoryBudgetScreenState extends ConsumerState<CategoryBudgetScreen> {
                 ],
               ],
             ),
+          // ── Floating Save Popup Button (appears when user modifies budgets) ──
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 20,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              offset: (_hasChanges() && isOwner) ? Offset.zero : const Offset(0, 2),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 260),
+                opacity: (_hasChanges() && isOwner) ? 1.0 : 0.0,
+                child: IgnorePointer(
+                  ignoring: !(_hasChanges() && isOwner),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: CoSpendColors.jadeGreen.withValues(alpha: 0.35),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: CoSpendColors.jadeGreen,
+                      borderRadius: BorderRadius.circular(28),
+                      child: InkWell(
+                        onTap: isSaving ? null : _saveBudgets,
+                        borderRadius: BorderRadius.circular(28),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isSaving)
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              const SizedBox(width: 10),
+                              Text(
+                                isSaving ? 'Saving Budgets...' : 'Save Budgets',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: isOwner
-          ? SafeArea(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                decoration: BoxDecoration(
-                  color: isDark ? CoSpendColors.darkCard : CoSpendColors.white,
-                  border: Border(
-                    top: BorderSide(
-                      color: isDark ? CoSpendColors.darkBorder : CoSpendColors.borderLight,
-                      width: 0.8,
-                    ),
-                  ),
-                  boxShadow: isDark ? null : CoSpendShadows.navBar,
-                ),
-                child: Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final created = await CreateCategorySheet.show(context);
-                        if (created != null && mounted) {
-                          setState(() => _initialized = false);
-                        }
-                      },
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('Add Category'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: CoSpendColors.jadeGreen,
-                        side: const BorderSide(color: CoSpendColors.jadeGreen),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: isSaving ? null : _saveBudgets,
-                        icon: isSaving
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.check_circle_outline_rounded, size: 18),
-                        label: Text(
-                          isSaving ? 'Saving Budgets...' : 'Save Category Budgets',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: CoSpendColors.jadeGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : null,
     );
   }
 }
