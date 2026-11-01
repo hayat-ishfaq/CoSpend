@@ -15,7 +15,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (notification == null) return;
 
   await NotificationService.instance.showNotification(
-    notificationId: message.messageId ?? message.sentTime.toString(),
+    notificationId: (message.data['notificationId'] as String?) ?? message.messageId ?? message.sentTime.toString(),
     title: notification.title ?? 'CoSpend',
     body: notification.body ?? '',
     payload: message.data['route'] as String?,
@@ -78,7 +78,7 @@ class FcmService {
       final notification = message.notification;
       if (notification == null) return;
       NotificationService.instance.showNotification(
-        notificationId: message.messageId ?? DateTime.now().toString(),
+        notificationId: (message.data['notificationId'] as String?) ?? message.messageId ?? message.sentTime?.toString() ?? 'fcm_msg',
         title: notification.title ?? 'CoSpend',
         body: notification.body ?? '',
         payload: message.data['route'] as String?,

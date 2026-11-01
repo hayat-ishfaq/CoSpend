@@ -22,14 +22,8 @@ class AppShellScreen extends ConsumerStatefulWidget {
 }
 
 class _AppShellScreenState extends ConsumerState<AppShellScreen> {
-  late final DateTime _sessionStartTime;
   final Set<String> _suppressedNotificationIds = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _sessionStartTime = DateTime.now();
-  }
+  bool _isInitialSnapshot = true;
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +35,16 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
       final list = next.value;
       if (list == null || list.isEmpty) return;
 
-      // Suppress any notifications created before this session was opened
-      for (final item in list) {
-        if (!item.createdAt.isAfter(_sessionStartTime)) {
+      // 1. Initial snapshot on login or app launch:
+      // Seed all historical notifications as already known and suppressed.
+      // Past notifications must NEVER trigger toasts or system tray alerts upon login.
+      if (_isInitialSnapshot || previous?.value == null) {
+        _isInitialSnapshot = false;
+        for (final item in list) {
           _suppressedNotificationIds.add(item.id);
           NotificationService.instance.markPresented(item.id);
         }
+        return;
       }
 
       final previousIds =
@@ -54,20 +52,22 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
       final locallyRead = ref.read(locallyReadNotificationIdsProvider);
 
       for (final item in list) {
-        final isAfterLaunch = item.createdAt.isAfter(_sessionStartTime);
-        final wasSuppressed = _suppressedNotificationIds.contains(item.id);
         final isNew = !previousIds.contains(item.id);
+        final wasSuppressed = _suppressedNotificationIds.contains(item.id);
         final isNotMine = item.payerId != currentUserId;
-        final isUnread = !item.readByUserIds.contains(currentUserId) &&
-            !locallyRead.contains(item.id);
-        final notPresentedYet =
-            !NotificationService.instance.isPresented(item.id);
+        final isAlreadyReadInCloud = item.readByUserIds.contains(currentUserId);
+        final isLocallyRead = locallyRead.contains(item.id);
+        final notPresentedYet = !NotificationService.instance.isPresented(
+          item.id,
+        );
 
-        if (isAfterLaunch &&
+        // Only trigger alerts for genuinely NEW events occurring while actively using the app,
+        // and only if the user hasn't already seen or read them.
+        if (isNew &&
             !wasSuppressed &&
-            isNew &&
             isNotMine &&
-            isUnread &&
+            !isAlreadyReadInCloud &&
+            !isLocallyRead &&
             notPresentedYet) {
           _suppressedNotificationIds.add(item.id);
           NotificationService.instance.markPresented(item.id);
@@ -85,7 +85,13 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               context,
               title: item.title,
               body: item.body,
-              onTap: () => NotificationsSheet.show(context),
+              onTap: () {
+                // When tapped, mark as read immediately so it never notifies again
+                ref
+                    .read(notificationActionsProvider.notifier)
+                    .markAsRead(item.id);
+                NotificationsSheet.show(context);
+              },
             );
           }
         }
@@ -99,7 +105,9 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           color: isDark ? const Color(0xFF071A2E) : CoSpendColors.white,
           border: Border(
             top: BorderSide(
-              color: isDark ? CoSpendColors.darkBorder : CoSpendColors.borderLight,
+              color: isDark
+                  ? CoSpendColors.darkBorder
+                  : CoSpendColors.borderLight,
               width: 0.8,
             ),
           ),

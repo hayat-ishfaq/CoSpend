@@ -34,7 +34,7 @@ final firebaseInitProvider = FutureProvider<void>((ref) async {
   }
 
   // Initialize local notification tray (foreground alerts via Firestore).
-  NotificationService.instance.initialize().catchError((e) {
+  await NotificationService.instance.initialize().catchError((e) {
     debugPrint('Failed to initialize NotificationService: $e');
   });
 

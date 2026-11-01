@@ -1,3 +1,4 @@
+import '../../../../core/services/notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,9 +89,9 @@ class NotificationActions extends AsyncNotifier<void> {
     // 1. Instant local badge clearance
     final currentNotifs = ref.read(householdNotificationsProvider).value;
     if (currentNotifs != null && currentNotifs.isNotEmpty) {
-      ref.read(locallyReadNotificationIdsProvider.notifier).markIds(
-            currentNotifs.map((n) => n.id),
-          );
+      final ids = currentNotifs.map((n) => n.id);
+      ref.read(locallyReadNotificationIdsProvider.notifier).markIds(ids);
+      NotificationService.instance.markAllPresented(ids);
     }
 
     // 2. Resolve target notification IDs to mark as read in Firestore
@@ -153,6 +154,7 @@ class NotificationActions extends AsyncNotifier<void> {
 
     // Immediate local clearance
     ref.read(locallyReadNotificationIdsProvider.notifier).markOne(notificationId);
+    NotificationService.instance.markPresented(notificationId);
 
     try {
       await FirebaseFirestore.instance
