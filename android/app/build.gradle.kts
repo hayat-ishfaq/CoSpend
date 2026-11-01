@@ -35,9 +35,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file(keyProperties.getProperty("storeFile") ?: "release.jks")
-            storePassword = keyProperties.getProperty("storePassword") ?: ""
-            keyAlias = keyProperties.getProperty("keyAlias") ?: ""
-            keyPassword = keyProperties.getProperty("keyPassword") ?: ""
+            storePassword = keyProperties.getProperty("storePassword") ?: "cospend123"
+            keyAlias = keyProperties.getProperty("keyAlias") ?: "cospend"
+            keyPassword = keyProperties.getProperty("keyPassword") ?: "cospend123"
             enableV1Signing = true
             enableV2Signing = true
         }
